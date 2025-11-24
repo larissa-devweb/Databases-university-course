@@ -1,0 +1,122 @@
+-- 1. Criação das tabelas com restrições e chaves estrangeiras
+CREATE TABLE Editora (
+    nomeEditora VARCHAR(100) PRIMARY KEY,
+    endereco VARCHAR(200),
+    fone BIGINT
+);
+
+CREATE TABLE Livro (
+    idLivro INT PRIMARY KEY,
+    titulo VARCHAR(200) NOT NULL,
+    nomeEditora VARCHAR(100),
+    FOREIGN KEY (nomeEditora) REFERENCES Editora(nomeEditora)
+);
+
+CREATE TABLE Autores_Livro (
+    idLivro INT,
+    nomeAutor VARCHAR(100),
+    PRIMARY KEY (idLivro, nomeAutor),
+    FOREIGN KEY (idLivro) REFERENCES Livro(idLivro)
+);
+
+CREATE TABLE Filial_Biblioteca (
+    idFilial INT PRIMARY KEY,
+    nomeFilial VARCHAR(100) NOT NULL,
+    endereco VARCHAR(200)
+);
+
+CREATE TABLE Copias_Livro (
+    idLivro INT,
+    idFilial INT,
+    noDeCopias INT CHECK (noDeCopias >= 0),
+    PRIMARY KEY (idLivro, idFilial),
+    FOREIGN KEY (idLivro) REFERENCES Livro(idLivro),
+    FOREIGN KEY (idFilial) REFERENCES Filial_Biblioteca(idFilial)
+);
+
+CREATE TABLE Usuario (
+    noCartao INT PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    endereco VARCHAR(200),
+    fone BIGINT
+);
+
+CREATE TABLE Livros_Emprestados (
+    idLivro INT,
+    idFilial INT,
+    noCartao INT,
+    dataSaida DATE NOT NULL,
+    dataDevolucao DATE,
+    PRIMARY KEY (idLivro, idFilial, noCartao, dataSaida),
+    FOREIGN KEY (idLivro) REFERENCES Livro(idLivro),
+    FOREIGN KEY (idFilial) REFERENCES Filial_Biblioteca(idFilial),
+    FOREIGN KEY (noCartao) REFERENCES Usuario(noCartao)
+);
+
+-- 2. Inserção de dados (mínimo 4 registros por tabela)
+INSERT INTO Editora VALUES
+('Pearson', 'Rua A, 123', 11223344),
+('Elsevier', 'Rua B, 456', 22334455),
+('Springer', 'Rua C, 789', 33445566),
+('Mcgraw-Hill', 'Rua D, 101', 44556677);
+
+INSERT INTO Livro VALUES
+(1, 'Banco de Dados Completo', 'Pearson'),
+(2, 'Sistemas Operacionais', 'Elsevier'),
+(3, 'Redes de Computadores', 'Springer'),
+(4, 'Engenharia de Software', 'Mcgraw-Hill');
+
+INSERT INTO Autores_Livro VALUES
+(1, 'Carlos Silva'),
+(2, 'Maria Santos'),
+(3, 'João Pereira'),
+(4, 'Ana Oliveira');
+
+INSERT INTO Filial_Biblioteca VALUES
+(1, 'Central', 'Av. Principal, 100'),
+(2, 'Norte', 'Av. Norte, 200'),
+(3, 'Sul', 'Av. Sul, 300'),
+(4, 'Leste', 'Av. Leste, 400');
+
+INSERT INTO Copias_Livro VALUES
+(1, 1, 5),
+(1, 2, 3),
+(2, 1, 2),
+(2, 3, 4),
+(3, 2, 6),
+(3, 4, 2),
+(4, 1, 3),
+(4, 3, 5);
+
+INSERT INTO Usuario VALUES
+(101, 'Pedro Alves', 'Rua X, 1', 99887766),
+(102, 'Mariana Costa', 'Rua Y, 2', 88776655),
+(103, 'Lucas Lima', 'Rua Z, 3', 77665544),
+(104, 'Carla Rodrigues', 'Rua W, 4', 66554433);
+
+INSERT INTO Livros_Emprestados VALUES
+(1, 1, 101, '2023-11-01', '2023-11-10'),
+(2, 1, 101, '2023-11-02', '2023-11-12'),
+(3, 2, 102, '2023-11-03', NULL),
+(4, 3, 103, '2023-11-04', '2023-11-14'),
+(1, 2, 104, '2023-11-05', NULL),
+(2, 3, 102, '2023-11-06', '2023-11-16');
+
+-- 3. Número de cópias por livro em cada filial
+SELECT 
+    l.titulo AS "Livro",
+    f.nomeFilial AS "Filial",
+    c.noDeCopias AS "Número de Cópias"
+FROM Copias_Livro c
+JOIN Livro l ON c.idLivro = l.idLivro
+JOIN Filial_Biblioteca f ON c.idFilial = f.idFilial
+ORDER BY l.titulo, f.nomeFilial;
+
+-- 4. Número de empréstimos por aluno
+SELECT 
+    u.nome AS "Aluno",
+    COUNT(*) AS "Total de Empréstimos"
+FROM Livros_Emprestados e
+JOIN Usuario u ON e.noCartao = u.noCartao
+GROUP BY u.noCartao, u.nome
+ORDER BY COUNT(*) DESC;
